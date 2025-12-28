@@ -7,10 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { Upload as UploadIcon, FileText, Loader2, AlertTriangle } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
-import * as pdfjsLib from 'pdfjs-dist';
-
-// @ts-ignore
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 export default function Upload() {
   const [file, setFile] = useState<File | null>(null);
@@ -33,16 +29,16 @@ export default function Upload() {
     }
   }, [toast]);
 
-  const extractTextFromPDF = async (file: File): Promise<string> => {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    let text = '';
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      text += content.items.map((item: any) => item.str).join(' ') + '\n';
-    }
-    return text;
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result.split(',')[1]); // Remove data URL prefix
+      };
+      reader.onerror = reject;
+    });
   };
 
   const handleUpload = async () => {
@@ -53,11 +49,18 @@ export default function Upload() {
       if (error) throw error;
       setUploading(false);
       setProcessing(true);
-      const text = await extractTextFromPDF(file);
+      
+      const fileBase64 = await fileToBase64(file);
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-document`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
-        body: JSON.stringify({ documentId, documentText: text, openaiApiKey: getApiKey() }),
+        body: JSON.stringify({ 
+          documentId, 
+          fileBase64, 
+          fileName: file.name,
+          fileType: file.type,
+          openaiApiKey: getApiKey() 
+        }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Extraction failed');
