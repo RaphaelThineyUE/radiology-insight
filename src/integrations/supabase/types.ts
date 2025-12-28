@@ -14,7 +14,183 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      documents: {
+        Row: {
+          created_at: string
+          file_size: number
+          file_type: string
+          filename: string
+          id: string
+          status: string | null
+          storage_path: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_size: number
+          file_type: string
+          filename: string
+          id?: string
+          status?: string | null
+          storage_path: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_size?: number
+          file_type?: string
+          filename?: string
+          id?: string
+          status?: string | null
+          storage_path?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      error_logs: {
+        Row: {
+          created_at: string
+          document_id: string | null
+          error_message: string
+          error_type: string
+          id: string
+          metadata: Json | null
+          stack_trace: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_id?: string | null
+          error_message: string
+          error_type: string
+          id?: string
+          metadata?: Json | null
+          stack_trace?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string | null
+          error_message?: string
+          error_type?: string
+          id?: string
+          metadata?: Json | null
+          stack_trace?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "error_logs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      extractions: {
+        Row: {
+          birads_score: number | null
+          created_at: string
+          document_id: string
+          extraction_data: Json
+          id: string
+          processing_time_ms: number | null
+          summary: string | null
+          user_id: string
+        }
+        Insert: {
+          birads_score?: number | null
+          created_at?: string
+          document_id: string
+          extraction_data: Json
+          id?: string
+          processing_time_ms?: number | null
+          summary?: string | null
+          user_id: string
+        }
+        Update: {
+          birads_score?: number | null
+          created_at?: string
+          document_id?: string
+          extraction_data?: Json
+          id?: string
+          processing_time_ms?: number | null
+          summary?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extractions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          openai_api_key_encrypted: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          openai_api_key_encrypted?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          openai_api_key_encrypted?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      usage_logs: {
+        Row: {
+          action: string
+          created_at: string
+          document_id: string | null
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_logs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

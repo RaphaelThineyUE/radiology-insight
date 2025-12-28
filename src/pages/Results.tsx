@@ -15,15 +15,15 @@ const biradsLabels: Record<number, string> = { 0: 'Incomplete', 1: 'Negative', 2
 export default function Results() {
   const { documentId } = useParams<{ documentId: string }>();
   const { getDocumentWithExtraction } = useDocuments();
-  const [document, setDocument] = useState<Document | null>(null);
+  const [doc, setDoc] = useState<Document | null>(null);
   const [extraction, setExtraction] = useState<Extraction | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     if (documentId) {
-      getDocumentWithExtraction(documentId).then(({ document, extraction }) => {
-        setDocument(document);
+      getDocumentWithExtraction(documentId).then(({ document: fetchedDoc, extraction }) => {
+        setDoc(fetchedDoc);
         setExtraction(extraction);
         setLoading(false);
       });
@@ -42,7 +42,7 @@ export default function Results() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${document?.filename || 'extraction'}.json`;
+    a.download = `${doc?.filename || 'extraction'}.json`;
     a.click();
   };
 
@@ -53,7 +53,7 @@ export default function Results() {
     <AppLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4"><Button variant="ghost" size="sm" asChild><Link to="/library"><ArrowLeft className="h-4 w-4 mr-2" />Back</Link></Button><h1 className="text-2xl font-bold">{document?.filename}</h1></div>
+          <div className="flex items-center gap-4"><Button variant="ghost" size="sm" asChild><Link to="/library"><ArrowLeft className="h-4 w-4 mr-2" />Back</Link></Button><h1 className="text-2xl font-bold">{doc?.filename}</h1></div>
           <div className="flex gap-2"><Button variant="outline" size="sm" onClick={() => copyToClipboard(JSON.stringify(data, null, 2))}><Copy className="h-4 w-4 mr-2" />Copy JSON</Button><Button variant="outline" size="sm" onClick={downloadJSON}><Download className="h-4 w-4 mr-2" />Download</Button></div>
         </div>
 
