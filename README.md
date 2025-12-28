@@ -1,5 +1,8 @@
 # Welcome to your Lovable project
 
+[![CI](https://github.com/RaphaelThineyUE/radiology-insight/actions/workflows/ci.yml/badge.svg)](https://github.com/RaphaelThineyUE/radiology-insight/actions/workflows/ci.yml)
+[![Deploy to GitHub Pages](https://github.com/RaphaelThineyUE/radiology-insight/actions/workflows/deploy.yml/badge.svg)](https://github.com/RaphaelThineyUE/radiology-insight/actions/workflows/deploy.yml)
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
@@ -62,7 +65,45 @@ This project is built with:
 
 ## How can I deploy this project?
 
+### Option 1: Deploy via Lovable (Easiest)
+
 Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+
+### Option 2: Deploy to GitHub Pages (Automated)
+
+This project is configured to automatically deploy to GitHub Pages when you push to the main branch.
+
+1. Go to your repository settings on GitHub
+2. Navigate to Pages section (Settings → Pages)
+3. Under "Build and deployment", select "GitHub Actions" as the source
+4. Push to the main branch and the deployment will start automatically
+
+The site will be available at: `https://raphaelthineyue.github.io/radiology-insight/`
+
+### Option 3: Create a Release
+
+To create a new release with packaged assets:
+
+1. Update the version in `package.json`
+2. Commit your changes
+3. Create and push a git tag:
+   ```sh
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+4. The release workflow will automatically build and create a GitHub release with downloadable assets
+
+### Manual Deployment
+
+To build and deploy manually:
+
+```sh
+# Build the project
+npm run build
+
+# The built files will be in the dist/ directory
+# You can deploy these files to any static hosting service
+```
 
 ## Can I connect a custom domain to my Lovable project?
 
