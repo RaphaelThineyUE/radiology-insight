@@ -1,5 +1,7 @@
-/* Inter & JetBrains Mono font import */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -20,9 +22,9 @@
     --popover: 240 5% 90%;
     --popover-foreground: 240 5% 10%;
 
-    /* Breast cancer pink brand */
-    --primary: 330 70% 55%;
-    --primary-foreground: 0 0% 100%;
+    /* Medical blue - trustworthy and professional */
+    --primary: 333 71% 50%;
+    --primary-foreground: 327 73% 97%;
 
     /* Light gray backgrounds */
     --secondary: 240 5% 33%;
@@ -31,9 +33,9 @@
     --muted: 240 4% 83%;
     --muted-foreground: 240 5% 10%;
 
-    /* Subtle pink accent */
-    --accent: 330 60% 96%;
-    --accent-foreground: 330 65% 35%;
+    /* Subtle accent */
+    --accent: 355 100% 97%;
+    --accent-foreground: 349 89% 60%;
 
     /* Status colors */
     --destructive: 0 72% 50%;
@@ -54,21 +56,21 @@
     --birads-5: 0 72% 51%;
     --birads-6: 0 84% 40%;
 
-    --border: 210 20% 90%;
-    --input: 210 20% 90%;
-    --ring: 330 70% 55%;
+    --border: 240 4% 83%;
+    --input: 240 4% 83%;
+    --ring: 333 71% 50%;
 
     --radius: 1.5rem;
 
     /* Sidebar */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 215 25% 15%;
-    --sidebar-primary: 330 70% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 330 15% 96%;
-    --sidebar-accent-foreground: 215 25% 15%;
-    --sidebar-border: 210 20% 92%;
-    --sidebar-ring: 330 70% 55%;
+    --sidebar-foreground: 240 5% 10%;
+    --sidebar-primary: 333 71% 50%;
+    --sidebar-primary-foreground: 327 73% 97%;
+    --sidebar-accent: 240 5% 33%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 4% 83%;
+    --sidebar-ring: 333 71% 50%;
 
     /* Typography */
     --font-sans: 'Poppins', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
@@ -103,8 +105,8 @@
     --popover: 240 5% 26%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 330 65% 60%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 328 85% 70%;
+    --primary-foreground: 336 83% 17%;
 
     --secondary: 240 3% 46%;
     --secondary-foreground: 0 0% 98%;
@@ -112,8 +114,8 @@
     --muted: 240 3% 46%;
     --muted-foreground: 0 0% 98%;
 
-    --accent: 330 25% 22%;
-    --accent-foreground: 330 60% 70%;
+    --accent: 343 87% 15%;
+    --accent-foreground: 351 94% 71%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 85% 97%;
@@ -124,18 +126,32 @@
     --warning: 38 80% 45%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 220 15% 22%;
-    --input: 220 15% 22%;
-    --ring: 330 65% 60%;
+    --border: 240 5% 33%;
+    --input: 240 5% 33%;
+    --ring: 328 85% 70%;
 
     --sidebar-background: 220 18% 12%;
-    --sidebar-foreground: 210 20% 95%;
-    --sidebar-primary: 330 65% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 18%;
-    --sidebar-accent-foreground: 210 20% 95%;
-    --sidebar-border: 220 15% 20%;
-    --sidebar-ring: 330 65% 60%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 328 85% 70%;
+    --sidebar-primary-foreground: 336 83% 17%;
+    --sidebar-accent: 351 94% 71%;
+    --sidebar-accent-foreground: 343 87% 15%;
+    --sidebar-border: 240 5% 33%;
+    --sidebar-ring: 328 85% 70%;
+    --chart-1: 327 87% 81%;
+    --chart-2: 352 95% 81%;
+    --chart-3: 328 85% 70%;
+    --chart-4: 351 94% 71%;
+    --chart-5: 240 5% 33%;
+    --sidebar: 240 3% 15%;
+    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
+    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
   }
 }
 
@@ -149,12 +165,7 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+  h1, h2, h3, h4, h5, h6 {
     @apply font-semibold tracking-tight;
   }
 }
@@ -170,39 +181,13 @@
   }
 
   /* BI-RADS badge utilities */
-  .birads-0 {
-    @apply bg-muted text-muted-foreground;
-  }
-
-  .birads-1 {
-    background-color: hsl(var(--birads-1));
-    @apply text-white;
-  }
-
-  .birads-2 {
-    background-color: hsl(var(--birads-2));
-    @apply text-white;
-  }
-
-  .birads-3 {
-    background-color: hsl(var(--birads-3));
-    @apply text-black;
-  }
-
-  .birads-4 {
-    background-color: hsl(var(--birads-4));
-    @apply text-white;
-  }
-
-  .birads-5 {
-    background-color: hsl(var(--birads-5));
-    @apply text-white;
-  }
-
-  .birads-6 {
-    background-color: hsl(var(--birads-6));
-    @apply text-white;
-  }
+  .birads-0 { @apply bg-muted text-muted-foreground; }
+  .birads-1 { background-color: hsl(var(--birads-1)); @apply text-white; }
+  .birads-2 { background-color: hsl(var(--birads-2)); @apply text-white; }
+  .birads-3 { background-color: hsl(var(--birads-3)); @apply text-black; }
+  .birads-4 { background-color: hsl(var(--birads-4)); @apply text-white; }
+  .birads-5 { background-color: hsl(var(--birads-5)); @apply text-white; }
+  .birads-6 { background-color: hsl(var(--birads-6)); @apply text-white; }
 
   /* Smooth transitions */
   .transition-clinical {
@@ -214,5 +199,3 @@
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   }
 }
-
-/* Font import moved to top to satisfy CSS rules */

@@ -8,7 +8,6 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Download, Copy, AlertTriangle, CheckCircle, FileText, Eye, EyeOff } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
 import type { Document, Extraction, RadiologyExtraction } from '@/types/radiology';
-import { createLogger } from '@/lib/logger';
 
 const biradsColors: Record<number, string> = { 0: 'bg-muted', 1: 'birads-1', 2: 'birads-2', 3: 'birads-3', 4: 'birads-4', 5: 'birads-5', 6: 'birads-6' };
 const biradsLabels: Record<number, string> = { 0: 'Incomplete', 1: 'Negative', 2: 'Benign', 3: 'Probably Benign', 4: 'Suspicious', 5: 'Highly Suggestive', 6: 'Known Malignancy' };
@@ -34,7 +33,6 @@ function collectAllEvidence(data: RadiologyExtraction): string[] {
 }
 
 export default function Results() {
-  const log = createLogger('ResultsPage');
   const { documentId } = useParams<{ documentId: string }>();
   const { getDocumentWithExtraction } = useDocuments();
   const [doc, setDoc] = useState<Document | null>(null);
@@ -48,13 +46,9 @@ export default function Results() {
     if (documentId) {
       getDocumentWithExtraction(documentId).then(({ document: fetchedDoc, extraction, documentUrl }) => {
         setDoc(fetchedDoc);
-      log.info('Loading results', { documentId });
-    //  getDocumentWithExtraction(documentId).then(({ document, extraction }) => {
-     //   setDocument(document);
         setExtraction(extraction);
         setDocumentUrl(documentUrl);
         setLoading(false);
-        log.info('Results loaded', { hasExtraction: !!extraction });
       });
     }
   }, [documentId]);
@@ -65,7 +59,6 @@ export default function Results() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({ title: 'Copied to clipboard' });
-    log.info('Copied JSON to clipboard');
   };
 
   const downloadJSON = () => {
@@ -75,7 +68,6 @@ export default function Results() {
     a.href = url;
     a.download = `${doc?.filename || 'extraction'}.json`;
     a.click();
-    log.info('Downloaded JSON');
   };
 
   if (loading) return <AppLayout><div className="flex justify-center py-12"><p className="text-muted-foreground">Loading...</p></div></AppLayout>;

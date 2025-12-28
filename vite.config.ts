@@ -9,71 +9,10 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
-  optimizeDeps: {
-    // Avoid prebundling pdfjs-dist which uses top-level await
-    exclude: ["pdfjs-dist"],
-    esbuildOptions: {
-      // Allow modern syntax in dependencies during dev
-      target: "esnext",
-    },
-  },
-  build: {
-    // Ensure modern syntax like top-level await is supported
-    target: "es2022",
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: [
-            "react",
-            "react-dom",
-            "react-router-dom",
-            "@tanstack/react-query",
-          ],
-          ui: [
-            "@radix-ui/react-accordion",
-            "@radix-ui/react-alert-dialog",
-            "@radix-ui/react-aspect-ratio",
-            "@radix-ui/react-avatar",
-            "@radix-ui/react-checkbox",
-            "@radix-ui/react-collapsible",
-            "@radix-ui/react-context-menu",
-            "@radix-ui/react-dialog",
-            "@radix-ui/react-dropdown-menu",
-            "@radix-ui/react-hover-card",
-            "@radix-ui/react-label",
-            "@radix-ui/react-menubar",
-            "@radix-ui/react-navigation-menu",
-            "@radix-ui/react-popover",
-            "@radix-ui/react-progress",
-            "@radix-ui/react-radio-group",
-            "@radix-ui/react-scroll-area",
-            "@radix-ui/react-select",
-            "@radix-ui/react-separator",
-            "@radix-ui/react-slider",
-            "@radix-ui/react-slot",
-            "@radix-ui/react-switch",
-            "@radix-ui/react-tabs",
-            "@radix-ui/react-toast",
-            "@radix-ui/react-toggle",
-            "@radix-ui/react-toggle-group",
-            "@radix-ui/react-tooltip",
-            "lucide-react",
-          ],
-          charts: ["recharts"],
-          pdf: ["pdfjs-dist"],
-          supabase: ["@supabase/supabase-js"],
-        },
-      },
-    },
-  },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-  },
-  base: mode === "production" ? (process.env.BASE_PATH || "/radiology-insight/") : "/",
-  build: {
-    target: "esnext",
   },
 }));
