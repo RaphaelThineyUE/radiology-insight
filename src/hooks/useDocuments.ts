@@ -53,9 +53,18 @@ export function useDocuments() {
 
   const getDocumentWithExtraction = async (documentId: string) => {
     const { data: doc, error: docError } = await db.from('documents').select('*').eq('id', documentId).single();
-    if (docError) return { document: null, extraction: null, error: docError };
+    if (docError) return { document: null, extraction: null, documentUrl: null, error: docError };
     const { data: extraction } = await db.from('extractions').select('*').eq('document_id', documentId).maybeSingle();
-    return { document: doc as Document, extraction: extraction as Extraction | null, error: null };
+    
+    // Get signed URL for document preview
+    let documentUrl = null;
+    if (doc && session) {
+      const authClient = createClient(supabaseUrl, supabaseKey, { global: { headers: { Authorization: `Bearer ${session.access_token}` } } });
+      const { data: urlData } = await authClient.storage.from('documents').createSignedUrl(doc.storage_path, 3600);
+      documentUrl = urlData?.signedUrl || null;
+    }
+    
+    return { document: doc as Document, extraction: extraction as Extraction | null, documentUrl, error: null };
   };
 
   return { documents, loading, uploadDocument, deleteDocument, getDocumentWithExtraction, refetch: fetchDocuments };
