@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import JSZip from "https://esm.sh/jszip@3.10.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -94,6 +95,85 @@ Respond with this exact JSON structure:
   "red_flags": ["string"]
 }`;
 
+// Extract text from DOCX file
+async function extractTextFromDocx(fileBytes: Uint8Array): Promise<string> {
+  try {
+    const zip = new JSZip();
+    await zip.loadAsync(fileBytes);
+    
+    const documentXml = await zip.file("word/document.xml")?.async("string");
+    if (!documentXml) {
+      throw new Error("No document.xml found in DOCX file");
+    }
+    
+    // Parse XML and extract text content
+    // Remove XML tags and extract text between <w:t> tags
+    const textMatches = documentXml.match(/<w:t[^>]*>([^<]*)<\/w:t>/g) || [];
+    const paragraphs: string[] = [];
+    let currentParagraph = '';
+    
+    // Split by paragraph markers
+    const parts = documentXml.split(/<\/w:p>/);
+    for (const part of parts) {
+      const matches = part.match(/<w:t[^>]*>([^<]*)<\/w:t>/g) || [];
+      const text = matches.map(m => {
+        const match = m.match(/<w:t[^>]*>([^<]*)<\/w:t>/);
+        return match ? match[1] : '';
+      }).join('');
+      if (text.trim()) {
+        paragraphs.push(text);
+      }
+    }
+    
+    return paragraphs.join('\n');
+  } catch (error) {
+    console.error('Error extracting text from DOCX:', error);
+    throw new Error('Failed to parse DOCX file');
+  }
+}
+
+// Extract text from PDF - basic extraction for text-based PDFs
+function extractTextFromPdf(fileBytes: Uint8Array): string {
+  try {
+    // Convert to string and look for text streams
+    const decoder = new TextDecoder('latin1');
+    const pdfContent = decoder.decode(fileBytes);
+    
+    // Extract text between stream and endstream markers
+    const textParts: string[] = [];
+    const streamRegex = /stream\s*([\s\S]*?)\s*endstream/g;
+    let match;
+    
+    while ((match = streamRegex.exec(pdfContent)) !== null) {
+      const streamContent = match[1];
+      // Look for text operators (Tj, TJ, ')
+      const textMatches = streamContent.match(/\(([^)]*)\)\s*Tj/g) || [];
+      for (const tm of textMatches) {
+        const textMatch = tm.match(/\(([^)]*)\)/);
+        if (textMatch) {
+          textParts.push(textMatch[1]);
+        }
+      }
+    }
+    
+    // If we found text, return it
+    if (textParts.length > 0) {
+      return textParts.join(' ').replace(/\\n/g, '\n').replace(/\\r/g, '');
+    }
+    
+    // Fallback: try to find readable text content
+    const readableText = pdfContent
+      .replace(/[^\x20-\x7E\n\r]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    return readableText || 'Unable to extract text from PDF. The document may be image-based or encrypted.';
+  } catch (error) {
+    console.error('Error extracting text from PDF:', error);
+    return 'Failed to extract text from PDF';
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -132,17 +212,32 @@ serve(async (req) => {
     // Decode base64 to get file content
     const fileBytes = Uint8Array.from(atob(fileBase64), c => c.charCodeAt(0));
     
-    // For now, we'll send the file content as text to OpenAI
-    // In a production app, you'd use a proper PDF parser
-    // OpenAI's GPT-4o can handle base64 encoded documents directly
-    const documentText = new TextDecoder().decode(fileBytes);
+    // Extract text based on file type
+    let documentText: string;
+    const isDocx = fileType?.includes('word') || fileName?.toLowerCase().endsWith('.docx') || fileName?.toLowerCase().endsWith('.doc');
+    const isPdf = fileType === 'application/pdf' || fileName?.toLowerCase().endsWith('.pdf');
+    
+    console.log(`Processing file: ${fileName}, type: ${fileType}, isDocx: ${isDocx}, isPdf: ${isPdf}`);
+    
+    if (isDocx) {
+      console.log('Extracting text from DOCX...');
+      documentText = await extractTextFromDocx(fileBytes);
+    } else if (isPdf) {
+      console.log('Extracting text from PDF...');
+      documentText = extractTextFromPdf(fileBytes);
+    } else {
+      // Try as plain text
+      documentText = new TextDecoder().decode(fileBytes);
+    }
+    
+    console.log(`Extracted ${documentText.length} characters of text`);
 
     // Log usage
     await supabase.from('usage_logs').insert({
       user_id: user.id,
       action: 'extraction_started',
       document_id: documentId,
-      metadata: { file_name: fileName, file_type: fileType }
+      metadata: { file_name: fileName, file_type: fileType, text_length: documentText.length }
     });
 
     // Update document status
