@@ -1,5 +1,8 @@
 # Welcome to your Lovable project
 
+[![CI](https://github.com/RaphaelThineyUE/radiology-insight/actions/workflows/ci.yml/badge.svg)](https://github.com/RaphaelThineyUE/radiology-insight/actions/workflows/ci.yml)
+[![Deploy to GitHub Pages](https://github.com/RaphaelThineyUE/radiology-insight/actions/workflows/deploy.yml/badge.svg)](https://github.com/RaphaelThineyUE/radiology-insight/actions/workflows/deploy.yml)
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
