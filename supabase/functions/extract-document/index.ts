@@ -161,17 +161,92 @@ function extractTextFromPdf(fileBytes: Uint8Array): string {
       return textParts.join(' ').replace(/\\n/g, '\n').replace(/\\r/g, '');
     }
     
-    // Fallback: try to find readable text content
-    const readableText = pdfContent
-      .replace(/[^\x20-\x7E\n\r]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-    
-    return readableText || 'Unable to extract text from PDF. The document may be image-based or encrypted.';
+    return '';
   } catch (error) {
     console.error('Error extracting text from PDF:', error);
-    return 'Failed to extract text from PDF';
+    return '';
   }
+}
+
+// Check if extracted text is usable (has enough meaningful content)
+function isTextUsable(text: string): boolean {
+  if (!text || text.length < 100) return false;
+  
+  // Check if text has enough alphanumeric characters (not just garbage)
+  const alphanumericRatio = (text.match(/[a-zA-Z0-9]/g) || []).length / text.length;
+  if (alphanumericRatio < 0.5) return false;
+  
+  // Check for common medical/radiology terms
+  const medicalTerms = ['patient', 'breast', 'mammogram', 'ultrasound', 'finding', 'impression', 'birads', 'bi-rads', 'density', 'mass', 'calcification', 'report'];
+  const lowerText = text.toLowerCase();
+  const hasMedicalTerms = medicalTerms.some(term => lowerText.includes(term));
+  
+  return hasMedicalTerms || text.length > 500;
+}
+
+// Call OpenAI with text content
+async function callOpenAIWithText(openaiApiKey: string, documentText: string): Promise<any> {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${openaiApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: EXTRACTION_PROMPT },
+        { role: 'user', content: `Please extract the structured data from this radiology report:\n\n${documentText}` }
+      ],
+      temperature: 0.1,
+      max_tokens: 4000,
+    }),
+  });
+  
+  return response;
+}
+
+// Call OpenAI with vision (for image-based PDFs)
+async function callOpenAIWithVision(openaiApiKey: string, fileBase64: string, fileType: string): Promise<any> {
+  console.log('Using GPT-4o vision for document extraction...');
+  
+  // Determine the media type for the data URL
+  const mediaType = fileType === 'application/pdf' ? 'application/pdf' : fileType;
+  const dataUrl = `data:${mediaType};base64,${fileBase64}`;
+  
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${openaiApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: EXTRACTION_PROMPT },
+        { 
+          role: 'user', 
+          content: [
+            { 
+              type: 'text', 
+              text: 'Please extract the structured data from this radiology report document. Read all the text visible in the document carefully.' 
+            },
+            { 
+              type: 'image_url', 
+              image_url: { 
+                url: dataUrl,
+                detail: 'high'
+              } 
+            }
+          ]
+        }
+      ],
+      temperature: 0.1,
+      max_tokens: 4000,
+    }),
+  });
+  
+  return response;
 }
 
 serve(async (req) => {
@@ -212,32 +287,45 @@ serve(async (req) => {
     // Decode base64 to get file content
     const fileBytes = Uint8Array.from(atob(fileBase64), c => c.charCodeAt(0));
     
-    // Extract text based on file type
-    let documentText: string;
+    // Determine file type
     const isDocx = fileType?.includes('word') || fileName?.toLowerCase().endsWith('.docx') || fileName?.toLowerCase().endsWith('.doc');
     const isPdf = fileType === 'application/pdf' || fileName?.toLowerCase().endsWith('.pdf');
     
     console.log(`Processing file: ${fileName}, type: ${fileType}, isDocx: ${isDocx}, isPdf: ${isPdf}`);
     
+    // Try text extraction first
+    let documentText = '';
+    let useVision = false;
+    
     if (isDocx) {
       console.log('Extracting text from DOCX...');
-      documentText = await extractTextFromDocx(fileBytes);
+      try {
+        documentText = await extractTextFromDocx(fileBytes);
+      } catch (e) {
+        console.error('DOCX extraction failed:', e);
+      }
     } else if (isPdf) {
-      console.log('Extracting text from PDF...');
+      console.log('Attempting text extraction from PDF...');
       documentText = extractTextFromPdf(fileBytes);
     } else {
       // Try as plain text
       documentText = new TextDecoder().decode(fileBytes);
     }
     
-    console.log(`Extracted ${documentText.length} characters of text`);
+    // Check if text extraction was successful
+    if (isPdf && !isTextUsable(documentText)) {
+      console.log('Text extraction insufficient, will use GPT-4o vision');
+      useVision = true;
+    }
+    
+    console.log(`Extracted ${documentText.length} characters of text, useVision: ${useVision}`);
 
     // Log usage
     await supabase.from('usage_logs').insert({
       user_id: user.id,
       action: 'extraction_started',
       document_id: documentId,
-      metadata: { file_name: fileName, file_type: fileType, text_length: documentText.length }
+      metadata: { file_name: fileName, file_type: fileType, text_length: documentText.length, use_vision: useVision }
     });
 
     // Update document status
@@ -246,23 +334,13 @@ serve(async (req) => {
       .update({ status: 'processing' })
       .eq('id', documentId);
 
-    // Call OpenAI
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: EXTRACTION_PROMPT },
-          { role: 'user', content: `Please extract the structured data from this radiology report:\n\n${documentText}` }
-        ],
-        temperature: 0.1,
-        max_tokens: 4000,
-      }),
-    });
+    // Call OpenAI - use vision if text extraction failed
+    let response;
+    if (useVision) {
+      response = await callOpenAIWithVision(openaiApiKey, fileBase64, fileType || 'application/pdf');
+    } else {
+      response = await callOpenAIWithText(openaiApiKey, documentText);
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
