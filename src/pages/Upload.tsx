@@ -7,8 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { Upload as UploadIcon, FileText, Loader2, AlertTriangle } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
+import * as pdfjsLib from 'pdfjs-dist';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import { createLogger } from '@/lib/logger';
+
+// Use the worker from the pdfjs-dist package
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 export default function Upload() {
+  const log = createLogger('UploadPage');
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -22,35 +29,41 @@ export default function Upload() {
     e.preventDefault();
     setDragOver(false);
     const droppedFile = e.dataTransfer.files[0];
+    log.info('File dropped', { name: droppedFile?.name, type: droppedFile?.type, size: droppedFile?.size });
     if (droppedFile && (droppedFile.type === 'application/pdf' || droppedFile.type.includes('word'))) {
       setFile(droppedFile);
     } else {
       toast({ title: 'Invalid file', description: 'Please upload a PDF or Word document', variant: 'destructive' });
+      log.warn('Invalid file type', { type: droppedFile?.type });
     }
   }, [toast]);
 
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const result = reader.result as string;
-        resolve(result.split(',')[1]); // Remove data URL prefix
-      };
-      reader.onerror = reject;
-    });
+  const extractTextFromPDF = async (file: File): Promise<string> => {
+    log.info('Extracting text from PDF', { name: file.name });
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map((item: any) => item.str).join(' ') + '\n';
+    }
+    log.info('PDF text extracted', { length: text.length });
+    return text;
   };
 
   const handleUpload = async () => {
     if (!file || !hasApiKey) return;
     setUploading(true);
     try {
+      log.info('Starting upload');
       const { documentId, error } = await uploadDocument(file);
       if (error) throw error;
       setUploading(false);
       setProcessing(true);
-      
-      const fileBase64 = await fileToBase64(file);
+      log.info('Upload inserted document row', { documentId });
+      const text = await extractTextFromPDF(file);
+      log.info('Calling extract-document function');
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-document`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
@@ -62,15 +75,19 @@ export default function Upload() {
           openaiApiKey: getApiKey() 
         }),
       });
+      log.info('Extract-document response', { status: response.status });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Extraction failed');
+      if (!response.ok) { log.error('Extraction failed', result); throw new Error(result.error || 'Extraction failed'); }
+      log.info('Extraction success', { processingTime: result.processingTime });
       toast({ title: 'Success', description: 'Document extracted successfully!' });
       navigate(`/results/${documentId}`);
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      log.error('Upload flow error', error);
     } finally {
       setUploading(false);
       setProcessing(false);
+      log.info('Upload flow finished');
     }
   };
 
@@ -97,6 +114,8 @@ export default function Upload() {
                   <UploadIcon className="h-12 w-12 mx-auto text-muted-foreground" />
                   <div><p className="font-medium">Drop your file here</p><p className="text-sm text-muted-foreground">or click to browse</p></div>
                   <input type="file" accept=".pdf,.doc,.docx" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => e.target.files?.[0] && setFile(e.target.files[0])} />
+                  {/* Log file selection via click */}
+                  {file && log.debug('File selected via browser', { name: file.name })}
                 </div>
               )}
             </div>

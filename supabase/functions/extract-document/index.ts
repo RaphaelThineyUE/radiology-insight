@@ -1,11 +1,13 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
+/// <reference types="https://deno.land/std@0.168.0/types.d.ts" />
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import JSZip from "https://esm.sh/jszip@3.10.1";
 
-const corsHeaders = {
+const corsHeaders: HeadersInit = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  // Be lenient with header capitalization to satisfy browsers
+  'Access-Control-Allow-Headers': 'Authorization, X-Client-Info, apikey, Content-Type, authorization, x-client-info, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 interface RadiologyExtraction {
@@ -269,7 +271,7 @@ serve(async (req) => {
     // Get user from token
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    
+
     if (userError || !user) {
       throw new Error('Invalid user token');
     }
@@ -345,7 +347,7 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('OpenAI API error:', response.status, errorText);
-      
+
       // Log error
       await supabase.from('error_logs').insert({
         user_id: user.id,
@@ -373,21 +375,11 @@ serve(async (req) => {
     // Parse the JSON response
     let extraction: RadiologyExtraction;
     try {
-      // Clean up the response in case it has markdown code blocks
-      let cleanContent = content.trim();
-      if (cleanContent.startsWith('```json')) {
-        cleanContent = cleanContent.slice(7);
-      }
-      if (cleanContent.startsWith('```')) {
-        cleanContent = cleanContent.slice(3);
-      }
-      if (cleanContent.endsWith('```')) {
-        cleanContent = cleanContent.slice(0, -3);
-      }
-      extraction = JSON.parse(cleanContent.trim());
-    } catch (parseError) {
+      const cleanContent = stripCodeFences(content);
+      extraction = JSON.parse(cleanContent);
+    } catch (_parseError) {
       console.error('Failed to parse OpenAI response:', content);
-      
+
       await supabase.from('error_logs').insert({
         user_id: user.id,
         document_id: documentId,
@@ -406,6 +398,11 @@ serve(async (req) => {
 
     const processingTime = Date.now() - startTime;
 
+    // Prepare safe values before saving
+    const biradsScore = extraction?.birads?.value ?? null;
+    const findingsCount = Array.isArray(extraction?.findings) ? extraction.findings.length : 0;
+    const summary = typeof extraction?.summary === 'string' ? extraction.summary : null;
+
     // Save extraction
     const { error: insertError } = await supabase
       .from('extractions')
@@ -413,8 +410,8 @@ serve(async (req) => {
         document_id: documentId,
         user_id: user.id,
         extraction_data: extraction,
-        summary: extraction.summary,
-        birads_score: extraction.birads.value,
+        summary,
+        birads_score: biradsScore,
         processing_time_ms: processingTime
       });
 
@@ -434,25 +431,25 @@ serve(async (req) => {
       user_id: user.id,
       action: 'extraction_completed',
       document_id: documentId,
-      metadata: { 
+      metadata: {
         processing_time_ms: processingTime,
-        birads_score: extraction.birads.value,
-        findings_count: extraction.findings.length
+        birads_score: biradsScore,
+        findings_count: findingsCount
       }
     });
 
-    return new Response(JSON.stringify({ 
-      success: true, 
+    return new Response(JSON.stringify({
+      success: true,
       extraction,
-      processingTime 
+      processingTime
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     console.error('Error in extract-document function:', error);
-    return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+    return new Response(JSON.stringify({
+      error: error instanceof Error ? error.message : 'Unknown error'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
