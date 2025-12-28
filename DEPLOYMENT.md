@@ -66,9 +66,18 @@ git push --follow-tags
 ### Vite Configuration
 
 The project is configured with:
-- **Base path:** `/radiology-insight/` for GitHub Pages deployment
+- **Base path:** `/radiology-insight/` for GitHub Pages deployment (can be overridden with `BASE_PATH` environment variable)
 - **Build target:** `esnext` to support modern JavaScript features (required for pdfjs-dist)
 - **Mode-aware base path:** Development mode uses `/`, production uses the repository path
+
+**Customizing the base path:**
+```bash
+# For a different repository name or custom domain
+BASE_PATH=/my-custom-path/ npm run build
+
+# For deployment to root domain
+BASE_PATH=/ npm run build
+```
 
 ### Version Management
 

@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  base: mode === "production" ? "/radiology-insight/" : "/",
+  base: mode === "production" ? (process.env.BASE_PATH || "/radiology-insight/") : "/",
   build: {
     target: "esnext",
   },
