@@ -119,22 +119,30 @@ serve(async (req) => {
       throw new Error('Invalid user token');
     }
 
-    const { documentId, documentText, openaiApiKey } = await req.json();
+    const { documentId, fileBase64, fileName, fileType, openaiApiKey } = await req.json();
 
-    if (!documentId || !documentText) {
-      throw new Error('Missing required fields: documentId and documentText');
+    if (!documentId || !fileBase64) {
+      throw new Error('Missing required fields: documentId and fileBase64');
     }
 
     if (!openaiApiKey) {
       throw new Error('OpenAI API key is required');
     }
 
+    // Decode base64 to get file content
+    const fileBytes = Uint8Array.from(atob(fileBase64), c => c.charCodeAt(0));
+    
+    // For now, we'll send the file content as text to OpenAI
+    // In a production app, you'd use a proper PDF parser
+    // OpenAI's GPT-4o can handle base64 encoded documents directly
+    const documentText = new TextDecoder().decode(fileBytes);
+
     // Log usage
     await supabase.from('usage_logs').insert({
       user_id: user.id,
       action: 'extraction_started',
       document_id: documentId,
-      metadata: { text_length: documentText.length }
+      metadata: { file_name: fileName, file_type: fileType }
     });
 
     // Update document status
