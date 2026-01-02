@@ -10,6 +10,8 @@ import Upload from "./pages/Upload";
 import Results from "./pages/Results";
 import Library from "./pages/Library";
 import Settings from "./pages/Settings";
+import Patients from "./pages/Patients";
+import PatientDetail from "./pages/PatientDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +52,8 @@ function AppRoutes() {
       <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
       <Route path="/results/:documentId" element={<ProtectedRoute><Results /></ProtectedRoute>} />
       <Route path="/library" element={<ProtectedRoute><Library /></ProtectedRoute>} />
+      <Route path="/patients" element={<ProtectedRoute><Patients /></ProtectedRoute>} />
+      <Route path="/patient/:patientId" element={<ProtectedRoute><PatientDetail /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>

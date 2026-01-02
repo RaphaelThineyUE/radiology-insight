@@ -2,11 +2,12 @@ import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, Upload, FolderOpen, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Upload, FolderOpen, Settings, LogOut, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/patients', label: 'Patients', icon: Users },
   { href: '/upload', label: 'Upload', icon: Upload },
   { href: '/library', label: 'Library', icon: FolderOpen },
   { href: '/settings', label: 'Settings', icon: Settings },

@@ -37,9 +37,24 @@ export interface Recommendation {
   evidence: string[];
 }
 
+export interface Patient {
+  id: string;
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  date_of_birth: string | null;
+  medical_record_number: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Document {
   id: string;
   user_id: string;
+  patient_id: string | null;
   filename: string;
   file_type: string;
   file_size: number;

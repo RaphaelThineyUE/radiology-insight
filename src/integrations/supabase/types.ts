@@ -21,6 +21,7 @@ export type Database = {
           file_type: string
           filename: string
           id: string
+          patient_id: string | null
           status: string | null
           storage_path: string
           updated_at: string
@@ -32,6 +33,7 @@ export type Database = {
           file_type: string
           filename: string
           id?: string
+          patient_id?: string | null
           status?: string | null
           storage_path: string
           updated_at?: string
@@ -43,12 +45,21 @@ export type Database = {
           file_type?: string
           filename?: string
           id?: string
+          patient_id?: string | null
           status?: string | null
           storage_path?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "documents_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       error_logs: {
         Row: {
@@ -131,6 +142,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      patients: {
+        Row: {
+          address: string | null
+          created_at: string
+          date_of_birth: string | null
+          email: string | null
+          first_name: string
+          id: string
+          last_name: string
+          medical_record_number: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          medical_record_number?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          medical_record_number?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

@@ -25,14 +25,14 @@ export function useDocuments() {
     setLoading(false);
   };
 
-  const uploadDocument = async (file: File): Promise<{ documentId: string | null; error: Error | null }> => {
+  const uploadDocument = async (file: File, patientId: string): Promise<{ documentId: string | null; error: Error | null }> => {
     if (!user || !session) return { documentId: null, error: new Error('Not authenticated') };
     try {
       const authClient = createClient(supabaseUrl, supabaseKey, { global: { headers: { Authorization: `Bearer ${session.access_token}` } } });
       const filePath = `${user.id}/${Date.now()}-${file.name}`;
       const { error: uploadError } = await authClient.storage.from('documents').upload(filePath, file);
       if (uploadError) throw uploadError;
-      const { data, error: insertError } = await db.from('documents').insert({ user_id: user.id, filename: file.name, file_type: file.type, file_size: file.size, storage_path: filePath, status: 'pending' }).select().single();
+      const { data, error: insertError } = await db.from('documents').insert({ user_id: user.id, patient_id: patientId, filename: file.name, file_type: file.type, file_size: file.size, storage_path: filePath, status: 'pending' }).select().single();
       if (insertError) throw insertError;
       await fetchDocuments();
       return { documentId: (data as Document).id, error: null };
